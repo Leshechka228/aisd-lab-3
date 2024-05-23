@@ -54,8 +54,7 @@ public:
 
     bool remove_edge(const Vertex& from, const Vertex& to) {
         auto it = remove_if(edges_.begin(), edges_.end(), [from, to](const Edge& e) {
-            return e.from == from && e.to == to;
-            });
+            return e.from == from && e.to == to;});
         if (it != edges_.end()) {
             edges_.erase(it, edges_.end());
             return true;
@@ -79,14 +78,23 @@ public:
         return outgoing_edges;
     }
 
+    vector<Edge> incoming_edges(const Vertex& vertex) const {
+        vector<Edge> ingoing_edges;
+        for (const auto& edge : edges_) {
+            if (edge.to == vertex) {
+                ingoing_edges.push_back(edge);
+            }
+        }
+        return ingoing_edges;
+    }
+
     size_t order() const {
         return vertices_.size();
     }
 
     size_t degree(const Vertex& v) const {
         return count_if(edges_.begin(), edges_.end(), [v](const Edge& e) {
-            return e.from == v;
-            });
+            return e.from == v;});
     }
 
     pair<vector<Edge>, Distance> shortest_path(const Vertex& from, const Vertex& to) const {
@@ -164,8 +172,86 @@ private:
     vector<Edge> edges_;
 };
 
+template <typename Vertex, typename Distance>
+Vertex find_farthest_from_neighbors(const Graph<Vertex, Distance>& graph) {
+    Vertex farthest_vertex;
+    Distance max_avg_distance = numeric_limits<Distance>::min();
+
+    for (const Vertex& vertex : graph.vertices()) {
+        Distance total_distance = 0;
+        size_t neighbor_count = 0;
+        for (const typename Graph<Vertex, Distance>::Edge& edge : graph.edges(vertex)) {
+            total_distance += edge.distance;
+            neighbor_count++;
+        }
+
+        if (neighbor_count > 0) {
+            Distance avg_distance = total_distance / static_cast<Distance>(neighbor_count);
+            if (avg_distance > max_avg_distance) {
+                max_avg_distance = avg_distance;
+                farthest_vertex = vertex;
+            }
+        }
+    }
+
+    return farthest_vertex;
+}
+
+template <typename Vertex, typename Distance>
+Vertex find_farthest_from_all_neighbors(const Graph<Vertex, Distance>& graph) {
+    Vertex farthest_vertex;
+    Distance max_avg_distance = numeric_limits<Distance>::min();
+
+    for (const Vertex& vertex : graph.vertices()) {
+        Distance total_distance = 0;
+        size_t neighbor_count = 0;
+        for (const typename Graph<Vertex, Distance>::Edge& edge : graph.edges(vertex)) {
+            total_distance += edge.distance;
+            neighbor_count++;
+        }
+
+        for (const typename Graph<Vertex, Distance>::Edge& edge : graph.incoming_edges(vertex)) {
+            total_distance += edge.distance;
+            neighbor_count++;
+        }
+
+        if (neighbor_count > 0) {
+            Distance avg_distance = total_distance / static_cast<Distance>(neighbor_count);
+            if (avg_distance > max_avg_distance) {
+                max_avg_distance = avg_distance;
+                farthest_vertex = vertex;
+            }
+        }
+    }
+
+    return farthest_vertex;
+}
 
 int main() {
+
+    Graph<int, double> new_graph; 
+
+    new_graph.add_vertex(1);
+    new_graph.add_vertex(2);
+    new_graph.add_vertex(3);
+
+    new_graph.add_edge(1, 2, 1.5);
+    new_graph.add_edge(2, 3, 2.0);
+    new_graph.add_edge(3, 1, 2.5);
+
+    cout << "Has vertex 1: " << new_graph.has_vertex(1) << endl;
+    cout << "Has edge from 2 to 3: " << new_graph.has_edge(2, 3) << endl;
+
+    auto vertices = new_graph.vertices();
+    for (const auto& v : vertices) {
+        cout << "Vertex: " << v << ", Degree: " << new_graph.degree(v) << endl;
+    }
+
+    new_graph.remove_vertex(2);
+    new_graph.remove_edge(3, 1);
+
+    cout << "Has vertex 2 after removal: " << new_graph.has_vertex(2) << endl;
+    cout << "Has edge from 3 to 1 after removal: " << new_graph.has_edge(3, 1) << endl;
 
     Graph<string, double> graph;
 
@@ -197,7 +283,7 @@ int main() {
     g.add_edge("A", "B", 2.0);
     g.add_edge("A", "C", 4.0);
     g.add_edge("B", "C", 1.0);
-    g.add_edge("B", "D", 7.0);
+    g.add_edge("B", "D", 1.0);
     g.add_edge("C", "D", 3.0);
     g.add_edge("C", "E", 2.0);
     g.add_edge("D", "E", 5.0);
@@ -217,6 +303,14 @@ int main() {
     else {
         cout << "Shortest path between vertices " << from << " and " << to << " not found.\n";
     }
+
+    string farthest_trauma_center = find_farthest_from_neighbors(g);
+
+    cout << "The emergency room that is furthest from its direct neighbors: " << farthest_trauma_center << endl;
+
+    string farthest_trauma_center_all = find_farthest_from_all_neighbors(g);
+
+    cout << "The emergency room that is furthest from all its direct neighbors: " << farthest_trauma_center_all << endl;
 
     return 0;
 }
