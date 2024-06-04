@@ -62,10 +62,29 @@ public:
         return false;
     }
 
+    bool remove_edge(const Edge& e) {
+        auto it = find_if(edges_.begin(), edges_.end(), [e](const Edge& edge) {
+            return edge.from == e.from && edge.to == e.to && edge.distance == e.distance;
+            });
+
+        if (it != edges_.end()) {
+            edges_.erase(it);
+            return true;
+        }
+
+        return false;
+    }
+
     bool has_edge(const Vertex& from, const Vertex& to) const {
         return any_of(edges_.begin(), edges_.end(), [from, to](const Edge& e) {
             return e.from == from && e.to == to;
             });
+    }
+
+    bool has_edge(const Edge& e) const {
+        return find_if(edges_.begin(), edges_.end(), [e](const Edge& edge) {
+            return edge.from == e.from && edge.to == e.to && edge.distance == e.distance;
+            }) != edges_.end();
     }
 
     vector<Edge> edges(const Vertex& vertex) const{
